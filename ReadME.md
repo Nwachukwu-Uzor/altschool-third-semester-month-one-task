@@ -38,3 +38,27 @@ Click on the "Action" button at the top and in the dropdown that appears, click 
 
 In my case the url is 
 [http://uzor-cloudlaunch-site-bucket.s3-website-eu-west-1.amazonaws.com/](http://uzor-cloudlaunch-site-bucket.s3-website-eu-west-1.amazonaws.com/)
+
+### 1b - CloudFront Setup
+- Search for cloudfront on the search bar and select the result that appears 
+![cloud front](assets/images/cloud-front-search.png)
+- On the cloudfront landing page select "create new cloudfront distribution"
+![cloud front distribution](assets/images/create-cloud-front.png)
+- A multi step form appears in the first step set the distribution name and description, ensure the distribution type is single website and app (which is the default) and click on next
+![cloud front distribution](assets/images/cloudfront-create-step-1.png)
+In the specify origin step, ensure the origin type is amazon s3 (the default). In the s3 origin input, click on browse s3 action button beside the input
+![cloud front distribution](assets/images/browse-s3-option.png)
+Select our cloud watch s3 url from the list and click on choose
+![cloud front distribution](assets/images/select-s3-bucket.png)
+An action bucket to use s3 endpoint now appears, click it to proceed
+![cloud front distribution](assets/images/use-s3-endpoint-cf.png)
+The completed section should look like this
+![cloud front distribution](assets/images/cloudfront-create-step-2.png)
+In the Enable Security section select "Do not enable security protection" as enabling security option may incure cost and click next
+![cloud front distribution](assets/images/cloudfront-create-step-3.png)
+In the review and create section, click on create distribution
+![cloud front distribution](assets/images/cloudfront-create-step-4.png)
+- Once this setup is complete you will be directed to a distribution details page for this distribution
+![alt text](cloudfront-distribution-complete.png)
+Copy the distribution domain name and paste it into a browser, this become a link to your website hosted on the cdn in my case <br />
+[https://d1eb34ny79m6vq.cloudfront.net/](https://d1eb34ny79m6vq.cloudfront.net/)
