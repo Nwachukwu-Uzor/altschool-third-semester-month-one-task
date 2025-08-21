@@ -33,6 +33,23 @@ To create the S3 bucket for static site hosting
 ![object selection](assets/images/file-public-acl.png)
 Click on the "Action" button at the top and in the dropdown that appears, click on "make public acls"
 ![make public acls](assets/images/make-public-acls.png)
+- In the bucket policy input field click on the "edit" button which opens the permission edit page, to only allow readonly permissions for anonymous users, add this permission block:
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::uzor-cloudlaunch-site-bucket/*"
+    }
+  ]
+}
+```
+![make public acls](assets/images/anonymous-user-read-permission.png)
+Click on save changes to complete
 - Return to the bucket details page and select the properties tab, scroll down to the "Static website hosting" and click on the "Bucket website endpoint" link
 ![static site url](assets/images/static-site-url.png)
 
