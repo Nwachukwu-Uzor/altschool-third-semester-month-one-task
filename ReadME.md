@@ -78,4 +78,81 @@ In the review and create section, click on create distribution
 - Once this setup is complete you will be directed to a distribution details page for this distribution
 ![alt text](cloudfront-distribution-complete.png)
 Copy the distribution domain name and paste it into a browser, this become a link to your website hosted on the cdn in my case <br />
-[https://d1eb34ny79m6vq.cloudfront.net/](https://d1eb34ny79m6vq.cloudfront.net/)
+[https://d1eb34ny79m6vq.cloudfront.net/](https://d1eb34ny79m6vq.cloudfront.net/
+
+
+### 2. Cloudlaunch-private-bucket
+- Click on S3 from the recently visited tab and select create S3 bucket
+- In the bucket name add "uzor-cloudlaunch-private-bucket" and keep all the other settings as default
+- Click on create bucket
+
+### 3. Cloudlaunch-visible-only-bucket
+- Repeat the steps for creating the private bucket but the name of this bucket should be "uzor-cloudlaunch-visible-only-bucket
+"
+
+### IAM User
+- On the recently visited section on the console home page, select IAM
+- On the users page, select "Users" from the sidebar and click on create user
+![iam user](assets/images/iam-users-page.png)
+- In the multi-step create user form that appear, in step 1, set the user name to "cloudlaunch-user" and click on next
+- Step 2 of the form "Set Permission", click on the "create group" action button to create a group for the user with the required permission
+![iam permission](assets/images/iam-permission-step-2.png)
+- To grant user **ListBucket** access on all three buckets: 
+    - In the select a service dropdown, select S3
+    - In the action allowed section, search for "ListBucket" and check the select input that appear
+    - Under the resources section, ensure it is set to specific (which is the default)
+    - Under the bucket subsection of the resources tab, click on "Add ARN" and a form pops up with two input fields, **Resource bucket name** and **Resource ARN**. Add the bucket name for the static site to the bucket name field in my case *uzor-cloudlaunch-site-bucket*, the resource arn field is automatically populated
+    ![alt text](add-arn.png)
+    - Repeat the above step 2 more time but in each case add the private bucket url (*uzor-cloudlaunch-private-bucket* in my case) and the visible only bucket url (*uzor-cloudlaunch-visible-only-bucket* in my case) should be added
+- To add **GetObject** to the *cloudlaunch-private-bucket only* and *cloudlaunch-site-bucket* buckets 
+    - click **Add more permission** which opens up a new permission form 
+    - select s3 as the service
+    - click on the **add arn** button under the bucket subsection of the resources section and in the form that pops up add the bucket name of the private bucket (*uzor-cloudlaunch-private-bucket* in my case) and click on **add arn**
+    - Repeat the previous step but this time use the static static site bucket url (*uzor-cloudlaunch-site-bucket* in my case)
+- To add **PutObject** permission to the cloudlaunch-private-bucket
+    - again search for s3 on the service section
+    - In the action search for and select **PutObject**
+    - click on the **add arn** button under the bucket subsection of the resources section and in the form that pops up add the bucket name of the private bucket (*uzor-cloudlaunch-private-bucket* in my case)
+    - An extra field object applies, just select the all objects checkbox
+    ![alt text](put-object-permission.png)
+    - Click on **add arn** to save
+
+
+The completed setup should look something like this
+![alt text](cloud-watch-group-setup.png)
+Click on next to continue
+- The json policy file for this policy is 
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": [
+                "arn:aws:s3:::uzor-cloudlaunch-private-bucket",
+                "arn:aws:s3::: uzor-cloudlaunch-site-bucket",
+                "arn:aws:s3:::uzor-cloudlaunch-visible-only-bucket"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": [
+                "arn:aws:s3:::uzor-cloudlaunch-private-bucket/*",
+                "arn:aws:s3:::uzor-cloudlaunch-site-bucket/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::uzor-cloudlaunch-private-bucket/*"
+        }
+    ]
+}
+```
+- In the review policy tab, add a policy name and description for the policy and click on **create policy**
+![alt text](review-policy.png)
