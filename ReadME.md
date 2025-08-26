@@ -78,7 +78,7 @@ In the review and create section, click on create distribution
 - Once this setup is complete you will be directed to a distribution details page for this distribution
 ![alt text](cloudfront-distribution-complete.png)
 Copy the distribution domain name and paste it into a browser, this become a link to your website hosted on the cdn in my case <br />
-[https://d1eb34ny79m6vq.cloudfront.net/](https://d1eb34ny79m6vq.cloudfront.net/
+[https://d1eb34ny79m6vq.cloudfront.net/](https://d1eb34ny79m6vq.cloudfront.net/)
 
 
 ### 2. Cloudlaunch-private-bucket
@@ -117,9 +117,18 @@ Copy the distribution domain name and paste it into a browser, this become a lin
     ![alt text](put-object-permission.png)
     - Click on **add arn** to save
 
+- In order to be able to view the buckets, we need to add the **GetBucketLocation** permission for the 3 buckets. To do this
+    - search for s3 on the services section
+    - in the action search for and select **GetBucketLocation**
+    - click on **add arn** and add the first bucket name (*uzor-cloudlaunch-private-bucket* in my case) and click on add arn
+    - repeat this process for the other 2 bucket names
+
+- I ran into an issue viewing the bucket so I had to give the policy the **ListAllBuckets** permission
+    - search for s3 under the services section
+    - in the 
 
 The completed setup should look something like this
-![alt text](cloud-watch-group-setup.png)
+![alt text](assets/images/cloud-watch-group-setup.png)
 Click on next to continue
 - The json policy file for this policy is 
 ```
@@ -129,15 +138,21 @@ Click on next to continue
         {
             "Sid": "VisualEditor0",
             "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
             "Action": "s3:ListBucket",
             "Resource": [
                 "arn:aws:s3:::uzor-cloudlaunch-private-bucket",
-                "arn:aws:s3::: uzor-cloudlaunch-site-bucket",
+                "arn:aws:s3:::uzor-cloudlaunch-site-bucket",
                 "arn:aws:s3:::uzor-cloudlaunch-visible-only-bucket"
             ]
         },
         {
-            "Sid": "VisualEditor1",
+            "Sid": "VisualEditor2",
             "Effect": "Allow",
             "Action": "s3:GetObject",
             "Resource": [
@@ -146,7 +161,7 @@ Click on next to continue
             ]
         },
         {
-            "Sid": "VisualEditor2",
+            "Sid": "VisualEditor3",
             "Effect": "Allow",
             "Action": "s3:PutObject",
             "Resource": "arn:aws:s3:::uzor-cloudlaunch-private-bucket/*"
@@ -154,5 +169,224 @@ Click on next to continue
     ]
 }
 ```
+- There is no need to explicitly specify the other two policies
+    - No DeleteObject permissions anywhere.
+    - No access to cloudlaunch-visible-only-bucket content.
+    as they are disabled by default
 - In the review policy tab, add a policy name and description for the policy and click on **create policy**
-![alt text](review-policy.png)
+![alt text](assets/images/review-policy.png)
+
+- Return to the **create user** page
+    - set the username to **cloudlaunch-user**
+    - check the **Provide user access to the AWS Management Console - optional** checkbox
+    - In the **Are you providing console access to a person?** select the *I want to create an IAM user* option
+    - Check **Users must create a new password at next sign-in - Recommended** checkbox
+    - click on next
+    ![alt text](assets/images/specify-user-details.png)
+- In the **Set Permission** section, click on the **attach policy** option, in the list that appear select CloudLauchUserPolicy (the one we created) and click on next
+![alt text](assets/images/attach-cloudlauch-user-policy.png)
+- In the review and create section, click on create user
+
+The created user credentials are 
+- username: cloudlaunch-user
+- password: qY3%(I(5
+- sign in url: [https://553819981471.signin.aws.amazon.com/console](https://553819981471.signin.aws.amazon.com/console)
+
+## Task 2: VPC Design for CloudLaunch Environment
+- In the recently visited section of the home screen select **vpc**
+- Click on the **Create vpc** action button
+- In the **create vpc** form that pops up , ensure the option **vpc and more** is select and set the name tag to **cloudlaunch-vpc**
+- Set the **IPv4 CIDR block** to **10.0.0.0/16**
+- In the number of availability zones, set it to 1 
+- Set the number of public subnets to 1 and number of private subnets to 2
+- Expand the customize subnet dropdown
+    - Set the public subnet CIDR to **10.0.1.0/24** this is for load balancers or future public-facing services
+    - Set the first private subnet CIDR to **10.0.2.0/24** this is for the app servers
+    - Set the second private subnet CIDR to **** this is for RDS-like services
+- Leave the rest of the settings as default and click on **create vpc** action button
+- The complete form should look like this
+![alt text](assets/images/completed-vpc-setup.png)
+- My completed vpc map looks like this 
+![alt text](assets/images/completed-vpc-map.png)
+
+### Internet Gateway
+- In the **vpc dashboard**, click on **internet gateway** from the sidebar
+- Click on **create internet gateway** on the page that appear
+- In the form that appears, set the **Name tag** to **cloudlaunch-igw** and click on **create internet gateway**
+![alt text](assets/images/internet-gateway-setup.png)
+- On successful, it should redirect to the details page for the newly created gateway and an action button **attach to vpc**
+![alt text](assets/images/attach-gw-to-vpc-action.png)
+- In the attach to vpc page select the cloudlaunch vpc and click on **attach internet gateway**
+![alt text](assets/images/attach-gw-to-cloudlaunch.png)
+
+### Route Table
+### 1. Route Table for Public Subnet
+- In the vpc dashboard page, select **Route tables** from the sidebar
+- Click on the **create route table** action button
+- In the form that appear, set the route table name to **cloudlaunch-public-rt**
+- In the vpc option, select cloudlaunch vpc and click on **create route table**
+![alt text](assets/images/attach-route-to-cloudlaunch-table.png)
+- On successful creation, you will get redirected to the details page for the route table
+- In the route table details page, select the **subnet association** tab and click on **edit subnet association**
+![alt text](assets/images/edit-subnet-association.png)
+- In the list of subnets that appear, select the public subnet from the list and click on **save association**
+![alt text](assets/images/public-subnet-association.png)
+- Return to the **route** tab of the route table details and click on **edit route**
+- In the edit route page, click on **add route**, in the destination add **0.0.0.0/0**, in the target select the internet gateway and select the **cloudlaunch-igw**. Click on **Save Changes**
+![alt text](assets/images/add-internet-gw-to-public-route-table.png)
+
+### 2. Private Subnet Route Tables
+- Create two new route table **cloudlaunch-app-rt** and **cloudlaunch-db-rt**
+- For the **cloudlaunch-app-rt** in the **subnet association** select the Application Subnet (10.0.2.0/24)
+- For the **cloudlaunch-db-rt** in the **subnet association** select the Database Subnet (10.0.3.0/28)
+![alt text](assets/images/app-server-subnet-association.png)
+![alt text](assets/images/db-server-subnet-association.png)
+
+### Security Groups
+### 1. cloudlaunch-app-sg
+- In the vpc dashboard sidebar, select **security groups**
+- Click on **create security group**
+- In the form that appear set the name of the security group to **cloudlaunch-app-sg** and set the vpc to the cloudlaunch vpc
+- In the **Inbound Rules** section, select type **HTTP**, in the source select **custom** and set the ip address to **10.0.0.0/16** (the vpc ip address)
+- In the **Outbound Rules** section, clear any default selection to ensure nothing is selected
+- Click on **create security group**
+![alt text](assets/images/cloudlaunch-app-sg.png)
+### 2. cloudlaunch-db-sg
+- Click on **security groups** from the sidebar
+- Set the name of the security group to **cloudlaunch-db-sg** and select the cloudlauch vpc
+- In the **Inbound Rules** section, select type **MYSQL/Aurora**, in the source select **custom** and set the ip address to **10.0.2.0/24** (the application subnet)
+- In the **Outbound Rules** section, clear any default selection to ensure nothing is selected
+- Click on **create security group**
+![alt text](assets/images/cloudlaunch-db-sg.png)
+
+###  IAM Permissions
+- Return to the console home page and select **IAM** from the recently visited section
+- Click on **policies** and click on **create policy**
+- In the services section selected **EC2** as vpcs are under EC2
+- In the action section
+    - Search for an check **DescribeVpcs**
+    - Search for and check **DescribeSubnets**
+    - Search for and check **DescribeRouteTables**
+    - Search for and check **DescribeInternetGateways**
+    - Search for and check **DescribeNatGateways**
+    - Search for and check **DescribeSecurityGroups**
+    - Search for and check **DescribeNetworkAcls**
+    - Search for and check **DescribeVpcPeeringConnections**
+    - Search for and check **DescribeVpnGateways**
+    - Search for and check **DescribeCustomerGateways**
+    - Search for and check **DescribeTransitGateways**
+    - Search for and check **DescribeVpcEndpoints**
+    - Search for and check **DescribeTags**
+- Click on next and click **create policy**
+
+The json policy can be found below:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeTags",
+                "ec2:DescribeVpcPeeringConnections",
+                "ec2:DescribeTransitGateways",
+                "ec2:DescribeNatGateways",
+                "ec2:DescribeCustomerGateways",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeInternetGateways",
+                "ec2:DescribeVpcs",
+                "ec2:DescribeVpcEndpoints",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeNetworkAcls",
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeVpnGateways"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### CloudLauch Group
+To make it easier to share the same set of permissions and policies, create a cloudlauch-group, to do this
+- Click on **user groups** from the IAM sidebar
+- Click on **create group**
+- Set the group name to **cloudlaunch-users-group**
+- In the users, select the **cloudlaunch-user** and in the **Attach permissions policies** select the **CloudLaunchUserPolicy** and **CloudLaunchVPCReadOnly**
+![alt text](assets/images/cloudlaunch-user-group.png)
+- Click **create user group**
+
+## Summary
+1. S3 Site Link
+[http://uzor-cloudlaunch-site-bucket.s3-website-eu-west-1.amazonaws.com/](http://uzor-cloudlaunch-site-bucket.s3-website-eu-west-1.amazonaws.com/)
+2. CloudFront site url
+[https://d1eb34ny79m6vq.cloudfront.net/](https://d1eb34ny79m6vq.cloudfront.net/)
+3. IAM user policy
+- CloudLaunchUserPolicy
+    ```
+    {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": [
+                "arn:aws:s3:::uzor-cloudlaunch-private-bucket",
+                "arn:aws:s3:::uzor-cloudlaunch-site-bucket",
+                "arn:aws:s3:::uzor-cloudlaunch-visible-only-bucket"
+            ]
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": [
+                "arn:aws:s3:::uzor-cloudlaunch-private-bucket/*",
+                "arn:aws:s3:::uzor-cloudlaunch-site-bucket/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor3",
+            "Effect": "Allow",
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::uzor-cloudlaunch-private-bucket/*"
+        }
+    ]
+    }
+    ```
+- CloudLaunchVPCReadOnly
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeTags",
+                "ec2:DescribeVpcPeeringConnections",
+                "ec2:DescribeTransitGateways",
+                "ec2:DescribeNatGateways",
+                "ec2:DescribeCustomerGateways",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeInternetGateways",
+                "ec2:DescribeVpcs",
+                "ec2:DescribeVpcEndpoints",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeNetworkAcls",
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeVpnGateways"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
