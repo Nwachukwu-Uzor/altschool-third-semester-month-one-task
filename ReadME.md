@@ -76,7 +76,7 @@ In the Enable Security section select "Do not enable security protection" as ena
 In the review and create section, click on create distribution
 ![cloud front distribution](assets/images/cloudfront-create-step-4.png)
 - Once this setup is complete you will be directed to a distribution details page for this distribution
-![alt text](cloudfront-distribution-complete.png)
+![alt text](assets/images/cloudfront-distribution-complete.png)
 Copy the distribution domain name and paste it into a browser, this become a link to your website hosted on the cdn in my case <br />
 [https://d1eb34ny79m6vq.cloudfront.net/](https://d1eb34ny79m6vq.cloudfront.net/)
 
@@ -102,7 +102,7 @@ Copy the distribution domain name and paste it into a browser, this become a lin
     - In the action allowed section, search for "ListBucket" and check the select input that appear
     - Under the resources section, ensure it is set to specific (which is the default)
     - Under the bucket subsection of the resources tab, click on "Add ARN" and a form pops up with two input fields, **Resource bucket name** and **Resource ARN**. Add the bucket name for the static site to the bucket name field in my case *uzor-cloudlaunch-site-bucket*, the resource arn field is automatically populated
-    ![alt text](add-arn.png)
+    ![alt text](assets/images/add-arn.png)
     - Repeat the above step 2 more time but in each case add the private bucket url (*uzor-cloudlaunch-private-bucket* in my case) and the visible only bucket url (*uzor-cloudlaunch-visible-only-bucket* in my case) should be added
 - To add **GetObject** to the *cloudlaunch-private-bucket only* and *cloudlaunch-site-bucket* buckets 
     - click **Add more permission** which opens up a new permission form 
@@ -114,7 +114,7 @@ Copy the distribution domain name and paste it into a browser, this become a lin
     - In the action search for and select **PutObject**
     - click on the **add arn** button under the bucket subsection of the resources section and in the form that pops up add the bucket name of the private bucket (*uzor-cloudlaunch-private-bucket* in my case)
     - An extra field object applies, just select the all objects checkbox
-    ![alt text](put-object-permission.png)
+    ![alt text](assets/images/put-object-permission.png)
     - Click on **add arn** to save
 
 - In order to be able to view the buckets, we need to add the **GetBucketLocation** permission for the 3 buckets. To do this
