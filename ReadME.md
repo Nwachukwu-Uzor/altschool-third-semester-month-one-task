@@ -390,3 +390,7 @@ To make it easier to share the same set of permissions and policies, create a cl
     ]
 }
 ```
+4. IAM user credential
+- username: cloudlaunch-user
+- password: qY3%(I(5
+- sign in url: https://553819981471.signin.aws.amazon.com/console
